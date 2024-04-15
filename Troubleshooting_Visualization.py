@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import streamlit as st
 
-st.title("Visualization for Testing Code")
+st.title("Image Visualization for Testing Code")
 
 def is_embryo_present(image):
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -29,7 +29,6 @@ def process_image(image, min_fluorescence=200, max_fluorescence=255):
             cv2.drawContours(image, [contour], -1, (0, 255, 0), 2)
             x, y, w, h = cv2.boundingRect(contour)
             cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0), 2)
-            cv2.putText(image, f"fish", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
 
             contour_region = image[y:y+h, x:x+w]
 
@@ -50,17 +49,23 @@ def process_image(image, min_fluorescence=200, max_fluorescence=255):
     else:
         return image
 
-uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png"])
+uploaded_files = st.file_uploader("Upload Images", type=["jpg", "png"], accept_multiple_files=True)
 
-if uploaded_file is not None:
-    image = cv2.imdecode(np.frombuffer(uploaded_file.read(), np.uint8), cv2.IMREAD_COLOR)
-
-    if is_embryo_present(image):
-        st.write("Embryo Present")
-        processed_image = process_image(image)
-        st.image(processed_image, channels="BGR", use_column_width=True)
+if uploaded_files:
+    if len(uploaded_files) > 5:
+        st.warning("Please upload a maximum of 5 images.")
     else:
-        st.write("No Embryo Detected")
+        for uploaded_file in uploaded_files:
+            image = cv2.imdecode(np.frombuffer(uploaded_file.read(), np.uint8), cv2.IMREAD_COLOR)
+            
+            st.subheader(f"Image: {uploaded_file.name}")
+            
+            if is_embryo_present(image):
+                st.write("Embryo Present")
+                processed_image = process_image(image)
+                st.image(processed_image, channels="BGR", use_column_width=True)
+            else:
+                st.write("No Embryo Detected")
 else:
-    st.warning("Please upload an image to get started.")
+    st.warning("Please upload images to get started.")
     
